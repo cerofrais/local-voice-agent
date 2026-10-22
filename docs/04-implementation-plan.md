@@ -27,6 +27,8 @@ Scope is English only, with Indian-accented callers. This is a short measurement
 
 ## Phase 1 — Baseline voice loop, no tools (2–3 days)
 
+**Status: done 2026-10-23.** `src/agent/bot.py` runs browser WebRTC, Silero VAD, Smart Turn v3, Whisper large-v3-turbo, Gemma 4 E4B and Kokoro on the GPU. Measured with an automated test call: first bot audio about 0.9–1.0 s after the caller's last word; VRAM 7.9 GB and flat across calls. Details in [06-phase1b-results.md](06-phase1b-results.md). Not yet tried with a human voice and a real microphone.
+
 (English only. Run after phase 1b, using the chosen models.)
 
 - [ ] Pipecat pipeline: SmallWebRTC, Silero VAD, Smart Turn v3, faster-whisper, Ollama (OpenAI-compatible), Kokoro.

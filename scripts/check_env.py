@@ -30,9 +30,15 @@ def check_gpu() -> None:
     if not shutil.which("nvidia-smi"):
         record(FAIL, "gpu", "nvidia-smi not found")
         return
-    code, out = run(["nvidia-smi", "--query-gpu=name,memory.total,memory.used", "--format=csv,noheader"])
+    code, out = run(
+        ["nvidia-smi", "--query-gpu=name,memory.total,memory.used", "--format=csv,noheader"]
+    )
     if code != 0:
-        record(FAIL, "gpu", out.splitlines()[0] if out else "nvidia-smi failed (reboot after driver update?)")
+        record(
+            FAIL,
+            "gpu",
+            out.splitlines()[0] if out else "nvidia-smi failed (reboot after driver update?)",
+        )
     else:
         record(OK, "gpu", out)
 
@@ -52,7 +58,11 @@ def check_ollama() -> None:
         record(FAIL, "ollama", f"not reachable at {base}: {e}")
         return
     wanted = s.llm_model if ":" in s.llm_model else f"{s.llm_model}:latest"
-    record(OK if wanted in models else WARN, f"ollama model {s.llm_model}", "present" if wanted in models else f"missing; have {sorted(models)}")
+    record(
+        OK if wanted in models else WARN,
+        f"ollama model {s.llm_model}",
+        "present" if wanted in models else f"missing; have {sorted(models)}",
+    )
 
 
 def check_imports() -> None:
@@ -66,7 +76,11 @@ def check_imports() -> None:
         import onnxruntime
 
         providers = onnxruntime.get_available_providers()
-        record(OK if "CUDAExecutionProvider" in providers else WARN, "onnxruntime providers", ", ".join(providers))
+        record(
+            OK if "CUDAExecutionProvider" in providers else WARN,
+            "onnxruntime providers",
+            ", ".join(providers),
+        )
     except Exception:
         pass
 

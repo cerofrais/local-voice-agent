@@ -31,14 +31,26 @@ PROMPT = (
 
 def items_for(condition: str) -> list[dict]:
     items = [
-        {"id": u["id"], "ref": u["text"], "entities": u["entities"], "path": AUDIO_DIR / condition / f"{u['id']}.wav"}
+        {
+            "id": u["id"],
+            "ref": u["text"],
+            "entities": u["entities"],
+            "path": AUDIO_DIR / condition / f"{u['id']}.wav",
+        }
         for u in load_utterances()
     ]
     if condition == "clean" and REAL_DIR.exists():
         for wav in sorted(REAL_DIR.glob("*.wav")):
             txt = wav.with_suffix(".txt")
             if txt.exists():
-                items.append({"id": f"real_{wav.stem}", "ref": txt.read_text().strip(), "entities": [], "path": wav})
+                items.append(
+                    {
+                        "id": f"real_{wav.stem}",
+                        "ref": txt.read_text().strip(),
+                        "entities": [],
+                        "path": wav,
+                    }
+                )
     return items
 
 
@@ -54,7 +66,12 @@ def run_config(spec: str) -> dict:
     warm = read_wav(AUDIO_DIR / "clean" / "u01.wav")
     list(model.transcribe(warm, language="en", beam_size=1)[0])
 
-    out = {"spec": spec, "load_s": round(t_load.elapsed, 2), "vram_loaded_mb": mem_loaded, "conditions": {}}
+    out = {
+        "spec": spec,
+        "load_s": round(t_load.elapsed, 2),
+        "vram_loaded_mb": mem_loaded,
+        "conditions": {},
+    }
     for cond in CONDITIONS:
         refs, hyps, lat, rtf, ent_hit, ent_tot = [], [], [], [], 0, 0
         for it in items_for(cond):
@@ -93,8 +110,13 @@ def main() -> None:
         r = run_config(spec)
         results.append(r)
         for cond, c in r["conditions"].items():
-            print(f"  {cond:6s} WER {c['wer']:.3f}  entities {c['entity_acc']:.2f}  p50 {c['latency_s']['p50']:.2f}s  p95 {c['latency_s']['p95']:.2f}s  RTF {c['rtf_mean']:.2f}")
-        print(f"  load {r['load_s']}s  VRAM loaded {r['vram_loaded_mb']} MB, peak {r['vram_peak_mb']} MB", flush=True)
+            print(
+                f"  {cond:6s} WER {c['wer']:.3f}  entities {c['entity_acc']:.2f}  p50 {c['latency_s']['p50']:.2f}s  p95 {c['latency_s']['p95']:.2f}s  RTF {c['rtf_mean']:.2f}"
+            )
+        print(
+            f"  load {r['load_s']}s  VRAM loaded {r['vram_loaded_mb']} MB, peak {r['vram_peak_mb']} MB",
+            flush=True,
+        )
         del r
     save_result("stt", {"runs": results})
 

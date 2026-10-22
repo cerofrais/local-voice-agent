@@ -26,7 +26,9 @@ SPEEDS = [1.0, 0.92, 1.08]
 def noisy(x: np.ndarray, rng: np.random.Generator, snr_db: float = 6.0) -> np.ndarray:
     # Pink-ish noise (cumulative filtering of white noise) at the requested SNR.
     n = rng.standard_normal(len(x)).astype(np.float32)
-    n = np.convolve(n, np.ones(8, dtype=np.float32) / 8, mode="same") + 0.3 * rng.standard_normal(len(x))
+    n = np.convolve(n, np.ones(8, dtype=np.float32) / 8, mode="same") + 0.3 * rng.standard_normal(
+        len(x)
+    )
     sig_p = float(np.mean(x**2)) + 1e-9
     n *= np.sqrt(sig_p / (10 ** (snr_db / 10)) / (float(np.mean(n**2)) + 1e-9))
     return (x + n).astype(np.float32)

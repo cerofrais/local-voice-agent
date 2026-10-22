@@ -8,7 +8,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     llm_base_url: str = "http://localhost:11434/v1"
-    llm_model: str = "gemma4:latest"
+    llm_model: str = "gemma4-voice"
     llm_api_key: str = "ollama"
     llm_num_ctx: int = 6144
 
@@ -18,6 +18,10 @@ class Settings(BaseSettings):
     stt_compute_type: str = "int8_float16"
     tts_engine: str = "kokoro"
     tts_voice: str = "af_heart"
+    stt_prompt: str = ""
+
+    data_dir: Path = Path("./data")
+    models_dir: Path = Path("./models")
 
     knowledge_dir: Path = Path("./knowledge")
     index_dir: Path = Path("./data/index")

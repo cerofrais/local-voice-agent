@@ -18,7 +18,11 @@ from num2words import num2words
 def preload_cuda_libs() -> None:
     """CTranslate2 dlopen()s libcublas/libcudnn by name; load the pip-installed copies first."""
     for sp in site.getsitepackages():
-        for pattern in ("nvidia/cublas/lib/libcublas*.so*", "nvidia/cuda_nvrtc/lib/*.so*", "nvidia/cudnn/lib/libcudnn*.so*"):
+        for pattern in (
+            "nvidia/cublas/lib/libcublas*.so*",
+            "nvidia/cuda_nvrtc/lib/*.so*",
+            "nvidia/cudnn/lib/libcudnn*.so*",
+        ):
             for lib in sorted(glob.glob(f"{sp}/{pattern}")):
                 try:
                     ctypes.CDLL(lib, mode=ctypes.RTLD_GLOBAL)
@@ -103,7 +107,9 @@ def write_wav(path: Path, samples: np.ndarray, rate: int = SAMPLE_RATE) -> None:
 def read_wav(path: Path) -> np.ndarray:
     with wave.open(str(path), "rb") as w:
         assert w.getframerate() == SAMPLE_RATE and w.getnchannels() == 1, path
-        return np.frombuffer(w.readframes(w.getnframes()), dtype=np.int16).astype(np.float32) / 32768
+        return (
+            np.frombuffer(w.readframes(w.getnframes()), dtype=np.int16).astype(np.float32) / 32768
+        )
 
 
 # --- text normalisation for WER and entity checks -------------------------------------------

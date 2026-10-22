@@ -22,7 +22,9 @@ TEXTS = {
 }
 
 
-async def first_chunk_and_total(kokoro: Kokoro, text: str, voice: str, lang: str) -> tuple[float, float, float]:
+async def first_chunk_and_total(
+    kokoro: Kokoro, text: str, voice: str, lang: str
+) -> tuple[float, float, float]:
     t0 = time.perf_counter()
     first, audio_s = None, 0.0
     async for samples, sr in kokoro.create_stream(text, voice=voice, speed=1.0, lang=lang):
@@ -51,8 +53,15 @@ async def main() -> None:
                 ttfa.append(f)
                 totals.append(t)
                 rtfs.append(t / a)
-            per_len[name] = {"ttfa_s": summarize(ttfa), "total_s": summarize(totals), "rtf": round(sum(rtfs) / len(rtfs), 3)}
-            print(f"{voice:11s} {name:6s} TTFA {per_len[name]['ttfa_s']['p50']:.3f}s  total {per_len[name]['total_s']['p50']:.2f}s  RTF {per_len[name]['rtf']:.2f}", flush=True)
+            per_len[name] = {
+                "ttfa_s": summarize(ttfa),
+                "total_s": summarize(totals),
+                "rtf": round(sum(rtfs) / len(rtfs), 3),
+            }
+            print(
+                f"{voice:11s} {name:6s} TTFA {per_len[name]['ttfa_s']['p50']:.3f}s  total {per_len[name]['total_s']['p50']:.2f}s  RTF {per_len[name]['rtf']:.2f}",
+                flush=True,
+            )
         out["voices"][voice] = per_len
     save_result("tts", out)
 

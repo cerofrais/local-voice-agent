@@ -83,3 +83,15 @@ Kokoro does not start playing before a whole text chunk is synthesised, so the a
 1. Re-run with **real Indian-accented recordings** when you have them.
 2. Optionally test **svara-TTS** if the Indian-English voice matters.
 3. Build the live pipeline (phase 1): Pipecat, Silero VAD, Smart Turn v3, these three models, browser WebRTC; then re-measure real voice-to-voice latency.
+
+## Live pipeline (phase 1, 2026-10-23)
+
+`src/agent/bot.py` (Pipecat 1.13): browser WebRTC (SmallWebRTC) -> Silero VAD (200 ms stop) -> Smart Turn v3 -> Whisper turbo -> Gemma 4 E4B via Ollama -> Kokoro (GPU) -> browser. Tested with `scripts/webrtc_smoke.py`, which joins as a WebRTC client, plays recordings and times the reply.
+
+- **Caller's last word to first bot audio: 0.9-1.0 s** on clean and phone-band audio (several calls, two runs). The bot's own breakdown for a turn is about 0.2 s endpointing wait + 0.12 s Whisper + 0.04 s LLM first token + 0.05-0.13 s sentence aggregation + 0.10-0.14 s Kokoro = 0.5-0.65 s; the rest is WebRTC transport and playout buffering. Smart Turn added about 2-4 ms because the 200 ms VAD window already ended the turn.
+- **Noisy-audio runs are not reported**: the test client finds the end of speech by amplitude, which fails when the noise floor is high.
+- **Model leak found and fixed**: Pipecat builds Whisper and Kokoro per call and keeps them, so VRAM grew 7.9 -> 9.5 -> 10.0 GB over three calls. `src/agent/shared_models.py` caches one instance per process; VRAM is now flat at 7.9 GB across calls, and startup warms both models.
+- **Thinking is on by default for Gemma 4 through Ollama** (3.4 s per reply instead of 0.15 s). The bot sends `reasoning_effort: "none"` on the OpenAI-compatible endpoint, which turns it off; `think: false` does not work there.
+- **Context size and residency**: the OpenAI-compatible endpoint cannot set `num_ctx` or `keep_alive`, so the model is defined in `ollama/Modelfile.voice` (6144 context) as `gemma4-voice`, and the bot pings Ollama every two minutes with `keep_alive: -1` so the model is never unloaded after the default five idle minutes.
+- The system prompt has no tool mentions, to avoid Gemma's empty-reply failure with unsupplied tools.
+- Caller speech is sometimes split into two turns when the caller pauses after a comma (Smart Turn judged the first half complete). That is normal endpointing behaviour, but it is the main thing to tune with real speech.

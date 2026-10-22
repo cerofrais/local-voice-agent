@@ -1,0 +1,6 @@
+# Pins the context size and temperature for the voice agent. Ollama's OpenAI-compatible endpoint
+# cannot set num_ctx per request, so bake it into a model tag.
+# Create with: ollama create gemma4-voice -f ollama/Modelfile.voice
+FROM gemma4:latest
+PARAMETER num_ctx 6144
+PARAMETER temperature 0.3

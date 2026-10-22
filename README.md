@@ -2,7 +2,7 @@
 
 A fully local voice agent for customer support and sales: speak to it, it answers from a knowledge base you supply, and it reads and writes your CRM.
 
-**Status:** planning. No code yet. Start with the docs. **Scope: English only first**; Hindi and Telugu are deferred to phase 8.
+**Status:** phase 1 done (live voice loop, no tools, knowledge or CRM yet). Start with the docs. **Scope: English only first**; Hindi and Telugu are deferred to phase 8.
 
 | Doc | Contents |
 |---|---|
@@ -23,6 +23,23 @@ cp .env.example .env
 uv sync
 uv run python scripts/check_env.py                  # all checks should pass
 ```
+
+## Run the voice agent
+
+```bash
+ollama create gemma4-voice -f ollama/Modelfile.voice   # once: pins context size
+uv run python -m agent.bot                             # loads models (about 5 s), then serves
+# open http://localhost:7860 in a browser, allow the microphone, press Connect
+```
+
+Automated test call (plays recordings as the caller and times the replies; bot must be running):
+
+```bash
+uv run python evals/bench/gen_audio.py                 # once: makes the test audio
+uv run python scripts/webrtc_smoke.py evals/data/audio/clean/u24.wav evals/data/audio/clean/u03.wav
+```
+
+Per-turn latency breakdowns print in the bot log; each call's transcript is saved in `data/calls/`.
 
 ## Chosen stack (phase 1b); full pipeline still to be built
 

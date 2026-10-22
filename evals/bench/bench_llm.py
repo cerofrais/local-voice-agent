@@ -48,7 +48,10 @@ def chat(model: str, messages: list[dict], tools: list[dict]) -> dict:
     gen_s = total - (first or 0.0)
     return {
         "text": "".join(text).strip(),
-        "calls": [{"name": c["function"]["name"], "args": c["function"].get("arguments", {})} for c in calls],
+        "calls": [
+            {"name": c["function"]["name"], "args": c["function"].get("arguments", {})}
+            for c in calls
+        ],
         "ttft_s": first if first is not None else total,
         "total_s": total,
         "tok_s": n_tok / gen_s if n_tok > 8 and gen_s > 0.05 else 0.0,
@@ -74,7 +77,8 @@ def score_tool(expect: dict, res: dict) -> tuple[bool, str]:
         return False, f"unexpected tool {stray}"
     for w in wanted:
         ok = any(
-            c["name"] == w["name"] and all(match(m, c["args"].get(k, "")) for k, m in w["args"].items())
+            c["name"] == w["name"]
+            and all(match(m, c["args"].get(k, "")) for k, m in w["args"].items())
             for c in res["calls"]
         )
         if not ok:
@@ -118,8 +122,14 @@ def run_model(model: str, repeats: int) -> dict:
     for case in cfg["cases"]:
         passes, notes = 0, []
         for _ in range(repeats):
-            res = chat(model, [{"role": "system", "content": cfg["system"]}, *case["messages"]], cfg["tools"])
-            ok, why = (score_tool if case["expect"]["kind"] == "tool" else score_text)(case["expect"], res)
+            res = chat(
+                model,
+                [{"role": "system", "content": cfg["system"]}, *case["messages"]],
+                cfg["tools"],
+            )
+            ok, why = (score_tool if case["expect"]["kind"] == "tool" else score_text)(
+                case["expect"], res
+            )
             passes += ok
             if not ok:
                 notes.append(why)
@@ -128,7 +138,12 @@ def run_model(model: str, repeats: int) -> dict:
                 tok_s.append(res["tok_s"])
             if res["text"]:
                 words.append(len(res["text"].split()))
-        per_case[case["id"]] = {"category": case["category"], "pass": passes, "of": repeats, "fails": notes[:2]}
+        per_case[case["id"]] = {
+            "category": case["category"],
+            "pass": passes,
+            "of": repeats,
+            "fails": notes[:2],
+        }
     total = sum(c["pass"] for c in per_case.values())
     cats: dict[str, list[int]] = {}
     for c in per_case.values():
@@ -160,7 +175,9 @@ def main() -> None:
         r = run_model(model, repeats)
         results.append(r)
         print(f"  pass {r['pass_rate']:.0%}  by category {r['by_category']}")
-        print(f"  TTFT p50 {r['ttft_s']['p50']:.2f}s p95 {r['ttft_s']['p95']:.2f}s  {r['tok_s_mean']} tok/s  reply {r['reply_words_mean']} words  VRAM {r['vram_mb']} MB")
+        print(
+            f"  TTFT p50 {r['ttft_s']['p50']:.2f}s p95 {r['ttft_s']['p95']:.2f}s  {r['tok_s_mean']} tok/s  reply {r['reply_words_mean']} words  VRAM {r['vram_mb']} MB"
+        )
         for cid, c in r["cases"].items():
             if c["pass"] < c["of"]:
                 print(f"  - {cid} [{c['category']}] {c['pass']}/{c['of']}: {c['fails']}")
