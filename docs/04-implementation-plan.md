@@ -52,6 +52,8 @@ Scope is English only, with Indian-accented callers. This is a short measurement
 
 ## Phase 3 — CRM integration (3–4 days)
 
+The full integration design, field mapping, proposed API and test plan are in [07-crm-integration.md](07-crm-integration.md); the steps below follow its section 9.
+
 - [ ] Get the lead details sheet columns (`00-requirements.md` question B) and write `LeadSchema` from them, with the question wording for each field in English (store wording per language so phase 8 only adds translations).
 - [ ] `LeadForm` state tracking, `set_lead_field` / `get_missing_fields` / `submit_lead` tools, spell-and-confirm routines for names, phone and email.
 - [ ] `CRMClient` interface plus `MockCRM` and contract tests.

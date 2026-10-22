@@ -1,0 +1,301 @@
+openapi: 3.1.0
+info:
+  title: CRM API required by the voice agent (proposed)
+  version: 1.0.0-draft
+  description: |
+    Proposed contract between the voice agent (Aanya role) and the travel CRM. Field names and enums
+    follow the enquiry form observed in the wishtrip CRM demo (see docs/07-crm-integration.md).
+    The CRM may expose equivalent endpoints under other names; the agent's HttpCRM adapter will be
+    mapped to them. Money is integer rupees. Times are ISO-8601 with a timezone (Asia/Kolkata).
+servers:
+  - url: http://localhost:8080
+security:
+  - bearerAuth: []
+paths:
+  /v1/contacts/lookup:
+    get:
+      summary: Find a traveller by phone number
+      parameters:
+        - { name: phone, in: query, required: true, schema: { type: string }, description: "Any common format; the CRM normalises to E.164" }
+      responses:
+        "200":
+          description: Match found
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ContactMatch" }
+        "404": { description: No traveller with this number }
+  /v1/destinations:
+    get:
+      summary: Destination enum with spoken aliases
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Destination" }
+  /v1/enquiries:
+    post:
+      summary: Create a lead
+      parameters:
+        - { $ref: "#/components/parameters/IdempotencyKey" }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/EnquiryIn" }
+      responses:
+        "201":
+          description: Created (or the original result when the key was already used)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/EnquiryRef" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+  /v1/enquiries/{id}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string } }
+    get:
+      summary: Read one enquiry
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Enquiry" }
+        "404": { description: Not found }
+    patch:
+      summary: Update fields of an enquiry
+      parameters:
+        - { $ref: "#/components/parameters/IdempotencyKey" }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/EnquiryPatch" }
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/EnquiryRef" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+  /v1/enquiries/{id}/notes:
+    post:
+      summary: Add a note (for example the call summary)
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+        - { $ref: "#/components/parameters/IdempotencyKey" }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [text]
+              properties:
+                text: { type: string, maxLength: 4000 }
+      responses:
+        "201": { description: Added }
+  /v1/tasks:
+    post:
+      summary: Create a callback or urgent hand-off task for a consultant
+      parameters:
+        - { $ref: "#/components/parameters/IdempotencyKey" }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TaskIn" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id: { type: string }
+        "422": { $ref: "#/components/responses/ValidationError" }
+  /v1/calls:
+    post:
+      summary: Log a finished call
+      parameters:
+        - { $ref: "#/components/parameters/IdempotencyKey" }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CallIn" }
+      responses:
+        "201":
+          description: Logged
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id: { type: string }
+        "422": { $ref: "#/components/responses/ValidationError" }
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: Service credential for the agent, scoped to the endpoints in this file only.
+  parameters:
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      schema: { type: string, maxLength: 128 }
+      description: "Same key within 24 hours returns the original result and never creates a second record. The agent sends <call_id>:<action>."
+  responses:
+    ValidationError:
+      description: Field-level errors the agent can speak or re-ask
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              errors:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    field: { type: string }
+                    message: { type: string }
+  schemas:
+    DestinationCode:
+      type: string
+      enum: [goa, kerala, dharamshala, thailand, japan, vietnam, bali, malaysia, dubai, kashmir, ladakh, andaman]
+    Destination:
+      type: object
+      properties:
+        code: { $ref: "#/components/schemas/DestinationCode" }
+        name: { type: string }
+        aliases: { type: array, items: { type: string }, description: "Spoken forms, e.g. backwaters, Munnar" }
+    Stage:
+      type: string
+      enum: [new, contacted, qualified, itinerary_sent, negotiation, advance_paid, docs_visa, ready, travelling, completed, lost, non_lead]
+    Lead:
+      type: object
+      description: Fields the agent collects. Required ones are marked in docs/07 section 3.
+      properties:
+        full_name: { type: string }
+        phone: { type: string, description: E.164 }
+        email: { type: string, format: email }
+        city: { type: string }
+        instagram: { type: string }
+        preferred_channel: { type: string, enum: [whatsapp, instagram, email, sms, phone] }
+        destination: { $ref: "#/components/schemas/DestinationCode" }
+        alternatives: { type: array, items: { type: string } }
+        travel_start: { type: string, format: date }
+        travel_end: { type: string, format: date }
+        month_if_flexible: { type: string, pattern: "^\\d{4}-\\d{2}$" }
+        nights: { type: integer, minimum: 1 }
+        flexibility: { type: string, enum: [fixed, plus_minus_3, flexible_month] }
+        adults: { type: integer, minimum: 1 }
+        children: { type: integer, minimum: 0 }
+        infants: { type: integer, minimum: 0 }
+        rooms: { type: integer, minimum: 1 }
+        trip_type: { type: string, enum: [couple, honeymoon, family, friends, solo, parents, corporate] }
+        pace: { type: string, enum: [slow, balanced, packed] }
+        comfort: { type: string, enum: [budget, comfort, premium, luxury] }
+        food: { type: string, enum: [veg, non_veg, jain, vegan, halal, no_preference] }
+        budget_total_inr: { type: integer, minimum: 0 }
+        departure_city: { type: string }
+        include_flights: { type: boolean }
+        interests:
+          type: array
+          items: { type: string }
+        notes: { type: string }
+    EnquiryIn:
+      allOf:
+        - $ref: "#/components/schemas/Lead"
+        - type: object
+          required: [full_name, phone, destination, adults, trip_type, budget_total_inr, departure_city]
+          properties:
+            source: { type: string, enum: [phone_call], default: phone_call }
+            stage: { $ref: "#/components/schemas/Stage" }
+            tags: { type: array, items: { type: string } }
+            created_by: { type: string, example: aanya-voice }
+            call_id: { type: string }
+    EnquiryPatch:
+      allOf:
+        - $ref: "#/components/schemas/Lead"
+        - type: object
+          properties:
+            stage: { $ref: "#/components/schemas/Stage" }
+            add_tags: { type: array, items: { type: string } }
+    Enquiry:
+      allOf:
+        - $ref: "#/components/schemas/Lead"
+        - type: object
+          properties:
+            id: { type: string }
+            reference: { type: string, example: WT-1058 }
+            stage: { $ref: "#/components/schemas/Stage" }
+            source: { type: string }
+            owner: { type: string }
+            tags: { type: array, items: { type: string } }
+            ai_score: { type: integer, minimum: 0, maximum: 100 }
+            updated_at: { type: string, format: date-time }
+    EnquiryRef:
+      type: object
+      properties:
+        id: { type: string }
+        reference: { type: string, example: WT-1058, description: "Spoken back to the caller" }
+        stage: { $ref: "#/components/schemas/Stage" }
+        created: { type: boolean, description: "false when an idempotent replay returned an existing record" }
+    ContactMatch:
+      type: object
+      properties:
+        contact_id: { type: string }
+        full_name: { type: string }
+        phone: { type: string }
+        open_enquiries:
+          type: array
+          items:
+            type: object
+            properties:
+              id: { type: string }
+              reference: { type: string }
+              destination: { $ref: "#/components/schemas/DestinationCode" }
+              stage: { $ref: "#/components/schemas/Stage" }
+              owner_first_name: { type: string }
+              updated_at: { type: string, format: date-time }
+    TaskIn:
+      type: object
+      required: [kind, reason]
+      properties:
+        kind: { type: string, enum: [callback, urgent_handoff] }
+        enquiry_id: { type: string }
+        contact_phone: { type: string, description: "Used when there is no enquiry yet" }
+        due_at: { type: string, format: date-time, description: "Callback time the caller asked for" }
+        reason: { type: string, description: "For example: cancellation, refund, complaint, medical, visa_rejection, discount, other" }
+        summary: { type: string }
+        add_tags: { type: array, items: { type: string }, example: [needs-human] }
+    CallIn:
+      type: object
+      required: [direction, started_at, duration_s, outcome]
+      properties:
+        direction: { type: string, enum: [inbound, outbound] }
+        handled_by: { type: string, example: aanya-voice }
+        enquiry_id: { type: string, description: "Omit for an unlinked lead" }
+        caller_phone: { type: string }
+        started_at: { type: string, format: date-time }
+        duration_s: { type: integer, minimum: 0 }
+        status: { type: string, enum: [completed, missed, voicemail, failed] }
+        outcome: { type: string, enum: [qualified, callback, not_interested, booked, handoff, info, voicemail, no_answer] }
+        sentiment: { type: string, enum: [positive, neutral, negative] }
+        summary: { type: string }
+        transcript:
+          type: array
+          items:
+            type: object
+            properties:
+              speaker: { type: string, enum: [agent, caller] }
+              text: { type: string }
+              t_offset_s: { type: number }
+        recording_url: { type: string, format: uri }

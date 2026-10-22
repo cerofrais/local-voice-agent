@@ -9,6 +9,7 @@ A fully local voice agent for customer support and sales: speak to it, it answer
 | [docs/00-requirements.md](docs/00-requirements.md) | Product requirements, decisions, open questions (start here) |
 | [docs/05-indic-voice-stack.md](docs/05-indic-voice-stack.md) | Hindi / Telugu / Indian-English speech models, GPU placement, telephony notes |
 | [docs/06-phase1b-results.md](docs/06-phase1b-results.md) | Measured English model bake-off and the chosen STT, LLM and TTS |
+| [docs/07-crm-integration.md](docs/07-crm-integration.md) | How the agent integrates with the CRM: lead fields, call flow, adapter, proposed API, tests (with [crm-api.openapi.yaml](docs/crm-api.openapi.yaml)) |
 | [docs/01-infra-requirements.md](docs/01-infra-requirements.md) | Hardware inventory, GPU memory budget, latency targets, prerequisites |
 | [docs/02-stack-research.md](docs/02-stack-research.md) | Framework, STT, LLM, TTS, RAG and CRM options compared, with sources |
 | [docs/03-architecture.md](docs/03-architecture.md) | Pipeline, components, turn lifecycle, tools, safety, repo layout |
