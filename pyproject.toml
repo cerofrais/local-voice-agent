@@ -1,0 +1,33 @@
+[project]
+name = "local-voice-agent"
+version = "0.1.0"
+description = "Fully local voice agent for support and sales qualification, wired to a self-hosted CRM."
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "pipecat-ai[kokoro,local-smart-turn-v3,openai,runner,silero,webrtc,whisper]>=1.13.0",
+    "pydantic-settings>=2.16.1",
+    "python-dotenv>=1.2.4",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8",
+    "pytest-asyncio>=0.24",
+    "ruff>=0.6",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/agent"]
+
+[tool.ruff]
+line-length = 100
+src = ["src", "tests"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
