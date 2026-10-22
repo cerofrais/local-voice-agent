@@ -1,0 +1,180 @@
+{
+  "runs": [
+    {
+      "spec": "large-v3-turbo:cuda:int8_float16",
+      "load_s": 1.77,
+      "vram_loaded_mb": 1179,
+      "conditions": {
+        "clean": {
+          "wer": 0.0622,
+          "entity_acc": 0.913,
+          "latency_s": {
+            "n": 30,
+            "mean": 0.106,
+            "p50": 0.105,
+            "p95": 0.115,
+            "max": 0.116
+          },
+          "rtf_mean": 0.023
+        },
+        "noisy": {
+          "wer": 0.0821,
+          "entity_acc": 0.8043,
+          "latency_s": {
+            "n": 30,
+            "mean": 0.107,
+            "p50": 0.104,
+            "p95": 0.114,
+            "max": 0.144
+          },
+          "rtf_mean": 0.024
+        },
+        "phone": {
+          "wer": 0.0622,
+          "entity_acc": 0.913,
+          "latency_s": {
+            "n": 30,
+            "mean": 0.106,
+            "p50": 0.105,
+            "p95": 0.116,
+            "max": 0.12
+          },
+          "rtf_mean": 0.023
+        }
+      },
+      "vram_peak_mb": 1261
+    },
+    {
+      "spec": "large-v3-turbo:cuda:int8_float16:prompt",
+      "load_s": 1.35,
+      "vram_loaded_mb": 992,
+      "conditions": {
+        "clean": {
+          "wer": 0.0672,
+          "entity_acc": 0.9348,
+          "latency_s": {
+            "n": 30,
+            "mean": 0.106,
+            "p50": 0.105,
+            "p95": 0.115,
+            "max": 0.117
+          },
+          "rtf_mean": 0.023
+        },
+        "noisy": {
+          "wer": 0.0796,
+          "entity_acc": 0.8261,
+          "latency_s": {
+            "n": 30,
+            "mean": 0.106,
+            "p50": 0.105,
+            "p95": 0.113,
+            "max": 0.115
+          },
+          "rtf_mean": 0.023
+        },
+        "phone": {
+          "wer": 0.0647,
+          "entity_acc": 0.9348,
+          "latency_s": {
+            "n": 30,
+            "mean": 0.106,
+            "p50": 0.105,
+            "p95": 0.113,
+            "max": 0.137
+          },
+          "rtf_mean": 0.023
+        }
+      },
+      "vram_peak_mb": 1066
+    },
+    {
+      "spec": "large-v3:cuda:int8_float16",
+      "load_s": 416.7,
+      "vram_loaded_mb": 1824,
+      "conditions": {
+        "clean": {
+          "wer": 0.0647,
+          "entity_acc": 0.913,
+          "latency_s": {
+            "n": 30,
+            "mean": 0.205,
+            "p50": 0.196,
+            "p95": 0.254,
+            "max": 0.266
+          },
+          "rtf_mean": 0.045
+        },
+        "noisy": {
+          "wer": 0.0871,
+          "entity_acc": 0.7826,
+          "latency_s": {
+            "n": 30,
+            "mean": 0.206,
+            "p50": 0.201,
+            "p95": 0.243,
+            "max": 0.245
+          },
+          "rtf_mean": 0.045
+        },
+        "phone": {
+          "wer": 0.0647,
+          "entity_acc": 0.8913,
+          "latency_s": {
+            "n": 30,
+            "mean": 0.204,
+            "p50": 0.198,
+            "p95": 0.243,
+            "max": 0.244
+          },
+          "rtf_mean": 0.044
+        }
+      },
+      "vram_peak_mb": 1898
+    },
+    {
+      "spec": "large-v3-turbo:cpu:int8",
+      "load_s": 1.4,
+      "vram_loaded_mb": 0,
+      "conditions": {
+        "clean": {
+          "wer": 0.0622,
+          "entity_acc": 0.913,
+          "latency_s": {
+            "n": 30,
+            "mean": 2.945,
+            "p50": 2.948,
+            "p95": 3.117,
+            "max": 3.154
+          },
+          "rtf_mean": 0.656
+        },
+        "noisy": {
+          "wer": 0.0821,
+          "entity_acc": 0.8043,
+          "latency_s": {
+            "n": 30,
+            "mean": 3.082,
+            "p50": 3.079,
+            "p95": 3.145,
+            "max": 3.147
+          },
+          "rtf_mean": 0.685
+        },
+        "phone": {
+          "wer": 0.0647,
+          "entity_acc": 0.8913,
+          "latency_s": {
+            "n": 30,
+            "mean": 3.111,
+            "p50": 3.106,
+            "p95": 3.191,
+            "max": 3.203
+          },
+          "rtf_mean": 0.692
+        }
+      },
+      "vram_peak_mb": 0
+    }
+  ]
+}

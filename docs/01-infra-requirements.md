@@ -22,6 +22,8 @@ Inspected on the dev machine:
 
 `nvidia-smi` fails with `Failed to initialize NVML: Driver/library version mismatch`. The loaded kernel module is 580.173.02 and the userspace library is 580.178. This usually means the driver packages were upgraded without a reboot. Reboot, then confirm `nvidia-smi` shows the 4070 SUPER. Nothing GPU-related can be benchmarked until this works.
 
+> **Measured full-stack GPU use (phase 1b):** 7.4 GB of 12 GB with desktop 1.1 + Whisper turbo 1.3 + Kokoro on GPU 0.5 + Gemma 4 E4B 4.5, leaving 4.8 GB. See `06-phase1b-results.md`.
+
 ## 2. Target: what "good enough to test" means
 
 The goal is a local rig that can hold a believable support/sales conversation, answer from supplied knowledge, and read and write the CRM.

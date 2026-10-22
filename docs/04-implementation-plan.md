@@ -14,6 +14,8 @@ Each phase ends with something you can run and judge. Do them in order; every la
 
 ## Phase 1b — English speech spike (1–2 days) — do this before phase 1
 
+**Status: done 2026-10-22.** Results and the chosen models are in [06-phase1b-results.md](06-phase1b-results.md): Whisper large-v3-turbo (GPU), Gemma 4 E4B, Kokoro on GPU; about 0.62 s mean for STT + LLM + TTS, measured. Still open: real Indian-accented recordings, and svara-TTS if an Indian-English voice matters.
+
 Scope is English only, with Indian-accented callers. This is a short measurement pass to pick the models, not a build.
 
 - [ ] Test set: 10–20 real call recordings if you have them, plus about 30 generated English utterances with trip names, places, dates, phone numbers and a few Indian-accented samples. Include an 8 kHz copy of each for the later Plivo work.

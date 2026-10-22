@@ -5,6 +5,9 @@ description = "Fully local voice agent for support and sales qualification, wire
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
 dependencies = [
+    "nvidia-cublas-cu12>=12.9.2.10",
+    "nvidia-cudnn-cu12>=9,<10",
+    "onnxruntime-gpu[cuda,cudnn]>=1.31.0",
     "pipecat-ai[kokoro,local-smart-turn-v3,openai,runner,silero,webrtc,whisper]>=1.13.0",
     "pydantic-settings>=2.16.1",
     "python-dotenv>=1.2.4",
@@ -15,6 +18,9 @@ dev = [
     "pytest>=8",
     "pytest-asyncio>=0.24",
     "ruff>=0.6",
+]
+eval = [
+    "jiwer>=4.0.0",
 ]
 
 [build-system]
@@ -31,3 +37,7 @@ src = ["src", "tests"]
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
+
+[tool.uv]
+# kokoro-onnx and pipecat depend on plain onnxruntime; use the CUDA build instead (same module name).
+exclude-dependencies = ["onnxruntime"]
