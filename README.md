@@ -2,7 +2,7 @@
 
 A fully local voice agent for customer support and sales: speak to it, it answers from a knowledge base you supply, and it reads and writes your CRM.
 
-**Status:** phase 1 done (live voice loop, no tools, knowledge or CRM yet). Start with the docs. **Scope: English only first**; Hindi and Telugu are deferred to phase 8.
+**Status:** phase 1 done (live voice loop) and **integrated with the ascend-travel-crm** (lead capture by voice, hand-offs, call logging; see docs/07 section 12). Knowledge base / RAG is still to do. Start with the docs. **Scope: English only first**; Hindi and Telugu are deferred to phase 8.
 
 | Doc | Contents |
 |---|---|
@@ -14,6 +14,18 @@ A fully local voice agent for customer support and sales: speak to it, it answer
 | [docs/02-stack-research.md](docs/02-stack-research.md) | Framework, STT, LLM, TTS, RAG and CRM options compared, with sources |
 | [docs/03-architecture.md](docs/03-architecture.md) | Pipeline, components, turn lifecycle, tools, safety, repo layout |
 | [docs/04-implementation-plan.md](docs/04-implementation-plan.md) | Phased plan, exit criteria, risks, open questions |
+
+## Run it against the CRM
+
+```bash
+# CRM side: its .env has VOICE_AGENT_API_KEY; copy that value to CRM_API_KEY here
+CRM_BACKEND=http  CRM_BASE_URL=http://localhost:3300/api/agent/v1  CRM_API_KEY=...   # in .env
+DEV_CALLER_PHONE=+919876543210        # WebRTC has no caller ID; this simulates one
+uv run python -m agent.bot            # open http://localhost:7860
+uv run python scripts/chat_sim.py new_lead      # same prompt + tools + CRM, text only, no GPU speech
+uv run pytest                          # contract tests hit the live CRM when it is reachable
+uv run python evals/tools/tool_calling.py -n 8   # does Gemma call the right tool? (rerun after prompt edits)
+```
 
 ## Dev setup (phase 0)
 

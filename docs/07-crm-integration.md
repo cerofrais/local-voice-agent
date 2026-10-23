@@ -6,9 +6,9 @@ _2026-10-23. Written for two readers: whoever builds the voice agent (this repo)
 
 | Item | State |
 |---|---|
-| Voice agent | Live loop works (phase 1). Tools, knowledge and CRM calls are not built yet. |
+| Voice agent | Live loop works (phase 1). **CRM tools and call logging are built and tested end to end** (section 12). Knowledge/RAG (`search_knowledge`) is not built yet. |
 | Reference CRM | You pointed me at the "wishtrip CRM" demo (https://demo-travel-crm-eight.vercel.app, by Ascent-Intelligent-Technologies). I signed in as its read-only *Demo Viewer* role and read its screens. |
-| Backend of the reference CRM | **None that I could see.** The login page says data is generated in the browser, and the page made no network calls I could observe. So there is no API to integrate with yet: **section 6 is a proposed contract** that the CRM must implement (or that we implement on top of whatever it has). |
+| Backend of the reference CRM | *(historical)* **None that I could see** in the demo; the CRM on harsha-pc-ubuntu (ascend-travel-crm) now implements section 6 as `/api/agent/v1`. Original note: **None that I could see.** The login page says data is generated in the browser, and the page made no network calls I could observe. So there is no API to integrate with yet: **section 6 is a proposed contract** that the CRM must implement (or that we implement on top of whatever it has). |
 | Target CRM | To be set up on harsha-pc-ubuntu. Whether it is this product's source, a build modelled on it, or another CRM is still open (section 11). |
 
 Everything marked **observed** below comes from the demo's screens. Everything marked **proposed** is my design and needs the CRM owner's agreement.
@@ -222,3 +222,47 @@ Full detail in [`crm-api.openapi.yaml`](crm-api.openapi.yaml). Summary:
 5. **Duplicate rule:** how recent must an existing enquiry be to be updated instead of creating a new one?
 6. **Who is notified** for urgent hand-offs, and is there a quiet-hours window the agent must respect?
 7. **Recording and retention:** do you want call recordings stored, and for how long?
+
+## 12. As built (2026-10-23)
+
+**CRM side** (`ascend-travel-crm`, `docs/18-voice-agent.md`): the section 6 API exists at `/api/agent/v1` plus `GET /config`,
+with idempotency, 422 field errors, PII masking and attribution as specified. Two additions to the draft: partial leads
+(tag `incomplete-voice-lead`) need only a phone, and `lookup` returns `returning`.
+
+**Agent side**
+| Piece | Where |
+|---|---|
+| `CRMClient` protocol, `MockCRM` (same rules as the API), `HttpCRM`, outbox + `ResilientCRM` | `src/agent/crm/` |
+| Parsers: lakh amounts, spoken phones and emails, date ranges, months, callback times, enums | `src/agent/lead/parsers.py` |
+| `LeadForm` (what is missing, in which order, the read-back sentence), destination resolver | `src/agent/lead/` |
+| `CallSession`: submit / callback / hand-off / partial lead / end-of-call log | `src/agent/call/session.py` |
+| Tools: `identify_trip`, `set_lead_field`, `get_missing_fields`, `submit_lead`, `schedule_callback`, `handoff_to_human` | `src/agent/tools/` |
+| Escalation guard (pipeline step) and outcome/sentiment/PII helpers | `src/agent/call/guard.py`, `analysis.py` |
+| Prompt built per call from the CRM's `/config` and the caller's CRM record | `src/agent/prompts/base.py` |
+
+**Behaviour worth knowing**
+- A call starts with `GET /config`, `GET /destinations` and the caller lookup in parallel (4 s budget; defaults if the CRM is slow).
+- Writes only happen after a read-back and a yes (`submit_lead` refuses otherwise); a changed detail forces a new read-back.
+- A returning caller with an open enquiry for the same destination is asked "add to that or start a new one" before anything is written.
+  Details for an unknown destination never touch an existing enquiry.
+- **Guardrails are enforced in code, not only in the prompt.** If the caller raises an escalation topic from the CRM's list, the guard
+  creates the urgent hand-off task immediately and constrains the reply (no refund or fee talk), whether or not the model called the
+  tool. At hang-up the same check, and a check for "call me back", run again so the CRM always gets the task.
+- Hang-up half way: a partial lead (`incomplete-voice-lead`, stage `new`) + a callback task + the call log, outcome `callback`.
+- CRM down: writes are queued in `data/outbox/` and replayed in order with the same idempotency keys (placeholder ids are resolved on replay);
+  rejected entries move to `data/outbox/dead/`. Reads fail fast and the agent offers a callback.
+- Local call logs in `data/calls/` are pruned after 30 days.
+
+**Measured**
+- `evals/tools/tool_calling.py` (18 situations x 8 samples, Gemma 4 E4B, real prompt): **93% right tool first**. Weak spots are a bare
+  name answer and a callback phrased as a question; both are covered by the code safety nets above.
+- Prompt lesson: concrete `Caller: "..." -> call tool(...)` examples beat rule lists (33/33 vs 28 to 30/33 on a first test), and a lingering
+  "developer" greeting message in the context dropped tool use from 94% to 46%, so the opening line lives in the system prompt.
+- Live runs through the real pipeline (`webrtc_smoke.py` with synthetic speech): a full new-lead call created a `qualified` lead and the call
+  log; a hang-up created the partial lead; a cancellation call from a known caller created an urgent task on their enquiry. First audio
+  1.1 to 2.0 s after the caller's last word with tool calls in the loop (the 1.2 s budget holds for plain turns; tool turns can exceed it).
+- `uv run pytest`: 139 tests, including contract tests that run against both `MockCRM` and the live CRM.
+
+**Not done yet**: `search_knowledge` (phase 2 RAG), outbound calls, telephony caller ID (the runner reads `body.caller_phone` / `From` when
+a telephony transport supplies it), recordings, real-caller accuracy numbers (all tests so far use synthetic speech), and the 15-25 scripted
+scenario suite of section 8.

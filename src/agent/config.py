@@ -31,6 +31,12 @@ class Settings(BaseSettings):
     crm_backend: str = "mock"
     crm_base_url: str = ""
     crm_api_key: str = ""
+    # Local WebRTC tests have no caller ID; set this to simulate the caller's number (E.164).
+    dev_caller_phone: str = ""
+    # Plivo telephony (-t plivo). The serializer hangs up the call with these; also used to look up the caller ID.
+    plivo_auth_id: str = ""
+    plivo_auth_token: str = ""
+    duplicate_window_days: int = 30
 
     fallback_llm_enabled: bool = False
     fallback_llm_base_url: str = ""
